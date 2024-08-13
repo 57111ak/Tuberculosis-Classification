@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 import Navbar from "../components/Navbar";
 import BackgroundCanvas from "../components/BackgroundCanvas";
-// import './styles.css'; // Ensure you import your stylesheet
+
 
 const Home = () => {
   const { scrollY } = useScroll();

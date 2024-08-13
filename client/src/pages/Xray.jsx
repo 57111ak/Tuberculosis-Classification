@@ -5,11 +5,14 @@ import { Sidebar } from "../components/Sidebar";
 
 export const Xray = () => {
   return (
-    <div className="bg-black flex p-10  w-full h-screen">
-      <div className="w-1/12">
+    <div className=" bg-black flex p-10  w-full h-screen">
+     <div className="z-0 absolute ">
+        <BackgroundCanvas />
+      </div>
+      <div className="z-50 w-1/12">
         <Sidebar />
       </div>
-      <div className=" px-10 py-5 text-white w-11/12">
+      <div className="z-50 px-10 py-5 text-white w-11/12">
         <h1 className="text-3xl font-bold mb-7">
           Uplaod your X-ray to check the Tuberculosis{" "}
         </h1>

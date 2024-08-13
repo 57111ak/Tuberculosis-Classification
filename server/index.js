@@ -1,20 +1,70 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const multer = require('multer');
 const path = require('path');
+const cors = require('cors');
 const fs = require('fs');
 const sharp = require('sharp');
 const tf = require('@tensorflow/tfjs-node');
-const cors = require('cors');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const User = require('./models/User.js'); // Create this model
 
 const app = express();
 const port = 5000;
 
-// Middleware
 app.use(cors());
-app.use('/uploads', express.static('uploads'));
+app.use(express.json());
 
-// Set up multer for file uploads
+// MongoDB connection
+mongoose.connect('mongodb://localhost:27017/tb_classification', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+}).then(()=>console.log("mongodb connected"))
+
 const upload = multer({ dest: 'uploads/' });
+
+// Authentication middleware
+const authenticateJWT = (req, res, next) => {
+  const token = req.header('Authorization')?.split(' ')[1];
+  if (token) {
+    jwt.verify(token, 'secret', (err, user) => {
+      if (err) return res.sendStatus(403);
+      req.user = user;
+      next();
+    });
+  } else {
+    res.sendStatus(401);
+  }
+};
+
+// Routes
+app.post('/signup', async (req, res) => {
+  const { name, email, password } = req.body;
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const newUser = new User({ name, email, password: hashedPassword });
+    console.log(newUser)
+  try {
+    await newUser.save();
+    res.status(201).send('User created');
+  } catch (error) {
+    res.status(500).send('Error creating user');
+  }
+});
+
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  const user = await User.findOne({ email });
+  let isAuthenticated = await bcrypt.compare(password, user.password);
+  console.log(isAuthenticated);
+  if (user && isAuthenticated) {
+    const token = jwt.sign({ email: user.email, name: user.name }, 'secret', { expiresIn: '1h' });
+    res.json({ token });
+  } else {
+    res.status(400).send('Invalid credentials');
+  }
+});
+
 
 // Path to the model JSON file
 const modelPath = path.join(__dirname, 'models/model.json');
@@ -113,7 +163,6 @@ app.post('/predict', upload.single('image'), async (req, res) => {
 });
 
 
-// Start the server
 app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
+  console.log(`Server running on http://localhost:${port}`);
 });
